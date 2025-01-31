@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from uuid import uuid4
@@ -61,6 +62,14 @@ app.add_middleware(
 UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+@app.middleware("http")
+async def redirect_to_https(request: Request, call_next):
+    if request.url.scheme == "http":
+        return RedirectResponse(url=str(request.url).replace("http://", "https://"), status_code=308)
+    return await call_next(request)
+
 
 # Modelos Pydantic
 class IncidenciaCreate(BaseModel):
