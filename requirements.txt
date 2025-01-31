@@ -3,5 +3,4 @@ uvicorn
 sqlalchemy
 pydantic
 pydantic-settings
-sqlite
 python-multipart
