@@ -187,6 +187,40 @@ def list_incidencias(request: Request, db: Session = Depends(get_db)):
         for inc in incidencias
     ]
 
+
+@app.get("/incidencias/", response_model=List[IncidenciaResponse])
+def list_incidencias(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    id_usuario: Optional[int] = None  # Parámetro opcional en la consulta
+):
+    query = db.query(Incidencia)
+    
+    if id_usuario:  # Filtrar si se envía id_usuario
+        query = query.filter(Incidencia.id_usuario_emisor == id_usuario)
+    
+    incidencias = query.all()
+    base_url = str(request.base_url)
+
+    return [
+        IncidenciaResponse(
+            id_incidencia=inc.id_incidencia,
+            id_usuario_emisor=inc.id_usuario_emisor,
+            id_catalogo=inc.id_catalogo,
+            subcategoria=inc.subcategoria,
+            asunto=inc.asunto,
+            descripcion=inc.descripcion,
+            imagen=f"{base_url}uploads/{os.path.basename(inc.imagen)}" if inc.imagen else None,
+            video=f"{base_url}uploads/{os.path.basename(inc.video)}" if inc.video else None,
+            audio=f"{base_url}uploads/{os.path.basename(inc.audio)}" if inc.audio else None,
+            fecha_emision=inc.fecha_emision.strftime('%Y-%m-%d'),
+            ubicacion={"lat": float(inc.ubicacion_lat), "lng": float(inc.ubicacion_lng)} if inc.ubicacion_lat and inc.ubicacion_lng else None,
+            status=inc.status
+        )
+        for inc in incidencias
+    ]
+
+
 @app.patch("/incidencias/{id_incidencia}/estado", response_model=dict)
 def update_incidencia_status(id_incidencia: str, estado_update: EstadoUpdate, db: Session = Depends(get_db)):
     incidencia = db.query(Incidencia).filter(Incidencia.id_incidencia == id_incidencia).first()
